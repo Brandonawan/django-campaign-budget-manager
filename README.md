@@ -17,7 +17,7 @@ This Django and Celery-based backend system powers an advertising agency’s bud
 Follow these steps to set up and run the project locally:
 
 Clone the Repository
-- git clone django-campaign-budget-manager
+- git clone git@github.com:Brandonawan/django-campaign-budget-manager.git
 - cd django-campaign-budget-manager
 
 Create and Activate Virtual Environment
