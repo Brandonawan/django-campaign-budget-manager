@@ -1,0 +1,58 @@
+Models:
+  Brand:
+    - name: String
+    - daily_budget: Float
+    - monthly_budget: Float
+    - current_daily_spend: Float
+    - current_monthly_spend: Float
+
+  Campaign:
+    - name: String
+    - brand: ForeignKey(Brand)
+    - is_active: Boolean
+    - total_spend_today: Float
+    - total_spend_month: Float
+    - allowed_start_hour: Integer (0-23)
+    - allowed_end_hour: Integer (0-23)
+
+  SpendLog:
+    - campaign: ForeignKey(Campaign)
+    - amount: Float
+    - timestamp: DateTime
+
+Logic:
+  Spend Tracking:
+    - On SpendLog creation:
+      - Increment Campaign.total_spend_today and total_spend_month
+      - Increment Brand.current_daily_spend and current_monthly_spend
+      - Use database transactions for atomicity
+
+  Budget Enforcement (Periodic Task):
+    - For each Campaign:
+      - If within dayparting hours and is_active:
+        - Check if Campaign.total_spend_today >= Brand.daily_budget
+        - Check if Campaign.total_spend_month >= Brand.monthly_budget
+        - Check if Brand.current_daily_spend >= Brand.daily_budget
+        - Check if Brand.current_monthly_spend >= Brand.monthly_budget
+        - If any condition true, set Campaign.is_active = False
+
+  Dayparting Checks (Periodic Task):
+    - For each Campaign:
+      - If current_hour in [allowed_start_hour, allowed_end_hour]:
+        - Set is_active = True if budgets allow
+      - Else:
+        - Set is_active = False
+
+  Daily Reset (Midnight Task):
+    - For each Campaign:
+      - Set total_spend_today = 0
+      - Set is_active = True if within dayparting and monthly budgets allow
+    - For each Brand:
+      - Set current_daily_spend = 0
+
+  Monthly Reset (1st of Month Task):
+    - For each Campaign:
+      - Set total_spend_month = 0
+      - Set is_active = True if within dayparting and daily budgets allow
+    - For each Brand:
+      - Set current_monthly_spend = 0
